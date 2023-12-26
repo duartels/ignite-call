@@ -4,6 +4,10 @@ export const Container = styled('div', {
   maxWidth: 852,
   padding: '0 $4',
   margin: '$20 auto $4',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '$4',
 })
 
 export const UserHeader = styled('div', {
