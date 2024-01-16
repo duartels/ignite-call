@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Calendar } from '../../../../../components/Calendar'
 import {
   Container,
@@ -8,15 +8,41 @@ import {
   TimePickerList,
 } from './styles'
 import dayjs from 'dayjs'
+import { api } from '../../../../../lib/axios'
+import { useRouter } from 'next/router'
+
+interface Availability {
+  possibleTimes: number[]
+  availableTimes: number[]
+}
 
 export function CalendarStep() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const isDateSelected = !!selectedDate
 
+  const [availability, setAvailability] = useState<Availability | null>(null)
+
+  const router = useRouter()
+  const username = String(router.query.username)
+
   const weekDay = selectedDate ? dayjs(selectedDate).format('dddd') : ''
   const describedDate = selectedDate
     ? dayjs(selectedDate).format('DD[ de ]MMMM')
     : ''
+
+  useEffect(() => {
+    if (!selectedDate) return
+
+    api
+      .get(`/users/${username}/availability`, {
+        params: {
+          date: dayjs(selectedDate).format('YYYY-MM-DD'),
+        },
+      })
+      .then((response) => {
+        setAvailability(response.data)
+      })
+  }, [selectedDate, username])
 
   return (
     <Container isTimePickerOpen={isDateSelected}>
@@ -29,17 +55,14 @@ export function CalendarStep() {
           </TimePickerHeader>
 
           <TimePickerList>
-            <TimePickerItem>08:00h</TimePickerItem>
-            <TimePickerItem>09:00h</TimePickerItem>
-            <TimePickerItem>10:00h</TimePickerItem>
-            <TimePickerItem>11:00h</TimePickerItem>
-            <TimePickerItem>12:00h</TimePickerItem>
-            <TimePickerItem>13:00h</TimePickerItem>
-            <TimePickerItem>14:00h</TimePickerItem>
-            <TimePickerItem>15:00h</TimePickerItem>
-            <TimePickerItem>16:00h</TimePickerItem>
-            <TimePickerItem>17:00h</TimePickerItem>
-            <TimePickerItem>18:00h</TimePickerItem>
+            {availability?.possibleTimes.map((time) => (
+              <TimePickerItem
+                key={time}
+                disabled={!availability.availableTimes.includes(time)}
+              >
+                {String(time).padStart(2, '0')}:00h
+              </TimePickerItem>
+            ))}
           </TimePickerList>
         </TimePicker>
       )}
